@@ -21,9 +21,135 @@ can move your application from __Azure__ to __Docker__ and vice versa.
 
 ## Quick Start
 
+We'll use the standard
+[ASP.NET Core template with Weather Forecast API](https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api)
+to check feature flags.
+
+Make the demo Web API application, as it described in the article above. Choose the type **Web API** and
+**Windows Authentication**.
+
+Run it and check, if it works and accessible through the Swagger.
+
 ### Classic Microsoft.FeatureManagement
+
+Install the **Microsoft.FeatureManagement** packet:
+
+```shell
+dotnet add package Microsoft.FeatureManagement --version 2.6.1
+```
+
+Please note that you need to install the version **2.6.1** because something was broken in the **3.0.0.**.
+
+We all are waiting for updates.
+
+Include feature management support to configuration:
+
+```c#
+builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"));
+```
+
+Append new feature flag **weather-forecast** to the **application.json** configuration file:
+
+```json
+{
+  "FeatureFlags": {
+    "weather-forecast": false
+  }
+}
+```
+
+Append the `_featureManager` to 
+[`WeatherForecastController`](https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/tutorials/first-web-api/samples/3.0/TodoApi/Controllers/WeatherForecastController.cs)
+and initialize it through the constructor:
+
+```c#
+private readonly ILogger<WeatherForecastController> _logger;
+private readonly IFeatureManager _featureManager;
+
+public WeatherForecastController(ILogger<WeatherForecastController> logger, IFeatureManager featureManager)
+{
+    _logger = logger;
+    _featureManager = featureManager;
+}
+```
+
+Rewrite the `Get` method to use the feature flag:
+
+```c#
+[HttpGet]
+[Produces(typeof(IEnumerable<WeatherForecast>))]
+public async Task<IActionResult> Get()
+{
+    if (await _featureManager.IsEnabledAsync("weather-forecast"))
+    {
+        return Ok(Enumerable.Range(1, 5)
+                            .Select(index => new WeatherForecast
+                            {
+                                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                                TemperatureC = Random.Shared.Next(-20, 55),
+                                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                            }));
+    }
+
+    return NotFound();
+}
+```
+
+Run the application and call the `Get` though the Swagger. It should return 404 status.
+Then make file enabled (in the **application.json**) and re-run the application.
+Call the `Get` again. IT should return 200 status and the collection of forecast.
+
+This static flag requires re-running of re-deploying of applications. Now let's try to use the dynamic flag.
 
 ### Append dynamic flag from Flipt
 
+Install and run **Flipt** Docker image:
+
+```shell
+docker run -d -p 8080:8080 -p 9000:9000 -v $HOME/flipt:/var/opt/flipt docker.flipt.io/flipt/flipt:latest
+```
+
+8080 is the port of **Flipt** Web UI and REST API, and 9000 is the port of gRPC API.
+
+Open [http://localhost:8080](http://localhost:8080) after running. Enter the **Flags** panel and create
+**Boolean** flag with name **Weather Forecast** and key **weather-forecast**.
+
+Install the package **Binateq.FeatureManagement.Flipt**:
+
+```shell
+dotnet add package Binateq.FeatureManagement.Flipt
+```
+
+Append `FliptFeatureFilter` to __composition root__:
+
+```c#
+builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"))
+       .AddFeatureFilter<FliptFeatureFilter>();
+```
+
+Set gRPC API URL and `FliptFeatureFilter` for the **weather-forecast** flag in the **application.json**:
+
+```json
+{
+  "Flipt": {
+    "Url": "http://localhost:9080"
+  },
+  "FeatureFlags": {
+    "weather-forecast": {
+      "EnabledFor": [
+        {
+          "Name": "FliptFeature"
+        }
+      ]
+    }
+  }
+}
+```
+
+Run the application and call the `Get` though the Swagger. It should return 404 status.
+__Enable__ the flag **weather-forecast** in the **Flipt** Web UI and repeat the call.
+The application should return 200 status and a list of forecasts.
+
 ### Append user-specific flag form Flipt
 
+<!--- Not written -->
