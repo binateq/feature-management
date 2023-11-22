@@ -7,17 +7,17 @@ The NuGet package **Binateq.FeatureManagement.Flipt** allows to use the feature-
 ## What for?
 
 The **Microsoft.FeatureManagement** provides simple and portable standard for .NET applications. It can be
-extended with __feature filters__, so you can use both static and dynamic feature flags.
+extended with *feature filters*, so you can use both static and dynamic feature flags.
 
 You can add the packet
 [**Microsoft.Azure.AppConfiguration.AspNetCore**](https://www.nuget.org/packages/Microsoft.Azure.AppConfiguration.AspNetCore)
 to use dynamic feature flags configured in __Microsoft Azure App Configuration service__.
 
-But what can you do, if you use __Docker/Kubernetes__ instead of __Azure__? You can use any feature toggle solution like
+But what can you do, if you use *Docker/Kubernetes* instead of *Azure*? You can use any feature toggle solution like
 **Flipt** that has its own unique methods to work with feature flags.
 
 Or you can use this package that implements feature filters' interface for **Flipt** gRPC API. In the latter case you
-can move your application from __Azure__ to __Docker__ and vice versa.
+can move your application from *Azure* to *Docker* and vice versa.
 
 ## Quick Start
 
@@ -120,7 +120,7 @@ Install the package **Binateq.FeatureManagement.Flipt**:
 dotnet add package Binateq.FeatureManagement.Flipt
 ```
 
-Append `FliptFeatureFilter` to __composition root__:
+Append `FliptFeatureFilter` to *composition root*:
 
 ```c#
 builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"))
@@ -146,8 +146,11 @@ Set gRPC API URL and `FliptFeatureFilter` for the **weather-forecast** flag in t
 }
 ```
 
+Please note that you need specify the filter `FliptFeature` in the configuration, although the class is called
+`FliptFeatureFilter`.
+
 Run the application and call the `Get` though the Swagger. It should return 404 status.
-__Enable__ the flag **weather-forecast** in the **Flipt** Web UI and repeat the call.
+*Enable* the flag **weather-forecast** in the **Flipt** Web UI and repeat the call.
 The application should return 200 status and a list of forecasts.
 
 ### Append user-specific flag form Flipt
