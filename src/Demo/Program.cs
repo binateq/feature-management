@@ -1,4 +1,6 @@
+using Binateq.FeatureManagement.Flipt;
 using Microsoft.AspNetCore.Authentication.Negotiate;
+using Microsoft.FeatureManagement;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +9,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"))
+       .AddFeatureFilter<FliptFeatureFilter>();
 
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
        .AddNegotiate();
