@@ -4,6 +4,14 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Authors>Mark Shevchenko</Authors>
+        <Description>Binateq.FeatureManagement.Flipt provides feature filters to access flags in the Flipt service.</Description>
+        <PackageProjectUrl>https://github.com/binateq/feature-management</PackageProjectUrl>
+        <PackageLicenseUrl>https://licenses.nuget.org/MIT</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/binateq/feature-management.git</RepositoryUrl>
+        <RepositoryType>GitHub</RepositoryType>
+        <PackageTags>feature management, flipt</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
