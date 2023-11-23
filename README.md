@@ -132,7 +132,7 @@ Set gRPC API URL and `FliptFeatureFilter` for the **weather-forecast** flag in t
 ```json
 {
   "Flipt": {
-    "Url": "http://localhost:9080"
+    "Url": "http://localhost:9000"
   },
   "FeatureFlags": {
     "weather-forecast": {

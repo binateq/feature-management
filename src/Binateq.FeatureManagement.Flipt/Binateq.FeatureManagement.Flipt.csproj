@@ -8,7 +8,8 @@
         <Authors>Mark Shevchenko</Authors>
         <Description>Binateq.FeatureManagement.Flipt provides feature filters to access flags in the Flipt service.</Description>
         <PackageProjectUrl>https://github.com/binateq/feature-management</PackageProjectUrl>
-        <PackageLicenseUrl>https://licenses.nuget.org/MIT</PackageLicenseUrl>
+        <PackageLicenseFile>LICENSE</PackageLicenseFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryUrl>https://github.com/binateq/feature-management.git</RepositoryUrl>
         <RepositoryType>GitHub</RepositoryType>
         <PackageTags>feature management, flipt</PackageTags>
@@ -26,5 +27,10 @@
 
     <ItemGroup>
         <Protobuf Include="Protos/flipt.proto" GrpcServices="Flipt"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <None Include="../../LICENSE" Pack="true" PackagePath="" />
+        <None Include="../../README.md" Pack="true" PackagePath="" />
     </ItemGroup>
 </Project>

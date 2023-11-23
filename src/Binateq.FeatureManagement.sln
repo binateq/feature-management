@@ -7,6 +7,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{BCA62A59-5B3C-4C66-B1A1-CE6E6F76B625}"
 	ProjectSection(SolutionItems) = preProject
 		..\README.md = ..\README.md
+		..\LICENSE = ..\LICENSE
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", "{58E3C859-1E42-4004-9047-7DE034FD78BD}"
