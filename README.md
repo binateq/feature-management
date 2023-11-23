@@ -114,6 +114,8 @@ docker run -d -p 8080:8080 -p 9000:9000 -v $HOME/flipt:/var/opt/flipt docker.fli
 Open [http://localhost:8080](http://localhost:8080) after running. Enter the **Flags** panel and create
 **Boolean** flag with name **Weather Forecast** and key **weather-forecast**.
 
+![Creating feature flag in Flipt UI](https://github.com/binateq/feature-management/assets/10639110/e45094a0-64a6-4ba6-a23f-7c1661e279f0)
+
 Install the package **Binateq.FeatureManagement.Flipt**:
 
 ```shell
