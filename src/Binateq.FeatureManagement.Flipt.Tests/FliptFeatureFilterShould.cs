@@ -60,4 +60,30 @@ public class FliptFeatureFilterShould
         
         Assert.Null(filter.Metadata);
     }
+
+    [Fact]
+    public void FillNamespaceWithValue_WhenNamespaceIsSpecified()
+    {
+        var logger = new NullLogger<FliptFeatureFilter>();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new[]
+                                                      {
+                                                          KeyValuePair.Create("Flipt:Namespace", "foo")
+                                                      })
+                                                      .Build();
+
+        var filter = new FliptFeatureFilter(logger, configuration);
+        
+        Assert.Equal("foo", filter.Namespace);
+    }
+
+    [Fact]
+    public void FillNamespaceWithDefault_WhenNamespaceDoesNotSpecified()
+    {
+        var logger = new NullLogger<FliptFeatureFilter>();
+        var configuration = new ConfigurationBuilder().Build();
+
+        var filter = new FliptFeatureFilter(logger, configuration);
+        
+        Assert.Equal("default", filter.Namespace);
+    }
 }

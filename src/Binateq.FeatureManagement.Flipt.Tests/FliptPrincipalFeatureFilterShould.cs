@@ -60,4 +60,32 @@ public class FliptPrincipalFeatureFilterShould
         
         Assert.Null(filter.Metadata);
     }
+
+    [Fact]
+    public void MakeValidRequest()
+    {
+        var request = FliptPrincipalFeatureFilter.MakeRequest(requestId: "foo",
+                                                              @namespace: "bar",
+                                                              flag: "baz",
+                                                              userId: "u123",
+                                                              new[]
+                                                              {
+                                                                  "g456",
+                                                                  "g789"
+                                                              });
+        
+        Assert.Equal("foo", request.RequestId);
+        
+        Assert.Equal("foo", request.Requests[0].RequestId);
+        Assert.Equal("bar", request.Requests[0].NamespaceKey);
+        Assert.Equal("baz", request.Requests[0].FlagKey);
+        Assert.Equal("u123", request.Requests[0].EntityId);
+        Assert.Equal("u123", request.Requests[0].Context["UserId"]);
+        
+        Assert.Equal("foo", request.Requests[1].RequestId);
+        Assert.Equal("bar", request.Requests[1].NamespaceKey);
+        Assert.Equal("baz", request.Requests[1].FlagKey);
+        Assert.Equal("g456", request.Requests[1].EntityId);
+        Assert.Equal("g456", request.Requests[1].Context["GroupId"]);
+    }
 }

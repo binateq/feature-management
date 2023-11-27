@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Binateq.FeatureManagement.Flipt.Protos;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
@@ -7,9 +8,13 @@ using Microsoft.FeatureManagement;
 
 namespace Binateq.FeatureManagement.Flipt;
 
+/// <summary>
+/// A feature filter that can be used to activate user-specified or group-specified feature from Flipt service.
+/// </summary>
 public class FliptPrincipalFeatureFilter : IContextualFeatureFilter<ClaimsPrincipal>, IDisposable
 {
     private readonly ILogger<FliptPrincipalFeatureFilter> _logger;
+    private readonly ClaimExtractor _claimExtractor;
 
     /// <summary>
     /// Creates Flipt service based principal feature filter.
@@ -58,6 +63,10 @@ public class FliptPrincipalFeatureFilter : IContextualFeatureFilter<ClaimsPrinci
 
             _logger.LogInformation($"{nameof(FliptPrincipalFeatureFilter)} started with authorization.");
         }
+
+        Namespace = string.IsNullOrWhiteSpace(parameters?.Namespace) ? "default" : parameters.Namespace;
+
+        _claimExtractor = new ClaimExtractor(parameters?.AnonymousId, parameters?.UserIdClaim, parameters?.GroupIdClaim);
     }
 
     /// <summary>
@@ -68,12 +77,17 @@ public class FliptPrincipalFeatureFilter : IContextualFeatureFilter<ClaimsPrinci
     /// <summary>
     /// Gets EvaluationService client.
     /// </summary>
-    internal Protos.EvaluationService.EvaluationServiceClient? EvaluationServiceClient { get; private set; }
+    internal EvaluationService.EvaluationServiceClient? EvaluationServiceClient { get; private set; }
     
     /// <summary>
     /// Gets metadata for gRPC request.
     /// </summary>
     internal Metadata? Metadata { get; private set; }
+
+    /// <summary>
+    /// Gets namespace.
+    /// </summary>
+    internal string Namespace { get; private set; }
 
     /// <summary>
     /// Disposes managed and unmanaged resources.
@@ -94,5 +108,65 @@ public class FliptPrincipalFeatureFilter : IContextualFeatureFilter<ClaimsPrinci
     }
 
     /// <inheritdoc />
-    public Task<bool> EvaluateAsync(FeatureFilterEvaluationContext featureFilterContext, ClaimsPrincipal appContext) => throw new NotImplementedException();
+    public async Task<bool> EvaluateAsync(FeatureFilterEvaluationContext context, ClaimsPrincipal claimsPrincipal)
+    {
+        if (EvaluationServiceClient == null)
+            return false;
+
+        var userId = _claimExtractor.GetUserId(claimsPrincipal);
+        var groupIds = _claimExtractor.GetGroupIds(claimsPrincipal);
+
+        try
+        {
+            var requestId = Guid.NewGuid().ToString("N");
+            var request = MakeRequest(requestId, Namespace, context.FeatureName, userId, groupIds);
+            var response = await EvaluationServiceClient.BatchAsync(request, Metadata);
+            
+            return response.Responses.Aggregate(false, (a, r) => a | r.BooleanResponse.Enabled);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Exception occurs while reading feature flag {FeatureName}, the false value has returned.", context.FeatureName);
+            
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Makes batch evaluation request.
+    /// </summary>
+    /// <param name="requestId">Request Id.</param>
+    /// <param name="namespace">Namespace.</param>
+    /// <param name="flag">Flag.</param>
+    /// <param name="userId">User Id.</param>
+    /// <param name="groupIds">Group Id.</param>
+    /// <returns>Batch evaluation request.</returns>
+    internal static BatchEvaluationRequest MakeRequest(string requestId, string @namespace, string flag, string userId, IEnumerable<string> groupIds)
+    {
+        var request = new BatchEvaluationRequest
+        {
+            RequestId = requestId
+        };
+        
+        request.Requests.Add(new EvaluationRequest
+        {
+            RequestId = requestId,
+            NamespaceKey = @namespace,
+            FlagKey = flag,
+            EntityId = userId,
+            Context = { { "UserId", userId }}
+        });
+        
+        request.Requests.AddRange(from groupId in groupIds
+                                  select new EvaluationRequest
+                                  {
+                                      RequestId = requestId,
+                                      NamespaceKey = @namespace,
+                                      FlagKey = flag,
+                                      EntityId = groupId,
+                                      Context = { { "GroupId", groupId } }
+                                  });
+
+        return request;
+    }
 }

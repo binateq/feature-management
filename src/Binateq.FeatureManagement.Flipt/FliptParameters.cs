@@ -11,7 +11,12 @@ public class FliptParameters
     /// Name of configuration section.
     /// </summary>
     public const string SectionName = "Flipt";
-    
+
+    /// <summary>
+    /// Gets or sets namespace.
+    /// </summary>
+    public string? Namespace { get; set; }
+
     /// <summary>
     /// Gets or sets anonymous identifier.
     /// </summary>

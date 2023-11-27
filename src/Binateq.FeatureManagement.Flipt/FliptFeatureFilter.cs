@@ -61,6 +61,8 @@ public class FliptFeatureFilter : IFeatureFilter, IDisposable
 
             _logger.LogInformation($"{nameof(FliptFeatureFilter)} started with authorization.");
         }
+
+        Namespace = string.IsNullOrWhiteSpace(parameters?.Namespace) ? "default" : parameters.Namespace;
     }
 
     /// <summary>
@@ -77,6 +79,11 @@ public class FliptFeatureFilter : IFeatureFilter, IDisposable
     /// Gets metadata for gRPC request.
     /// </summary>
     internal Metadata? Metadata { get; private set; }
+    
+    /// <summary>
+    /// Gets namespace.
+    /// </summary>
+    internal string Namespace { get; private set; }
     
     /// <summary>
     /// Disposes managed and unmanaged resources.
@@ -107,7 +114,7 @@ public class FliptFeatureFilter : IFeatureFilter, IDisposable
             var request = new GetFlagRequest
             {
                 Key = context.FeatureName,
-                NamespaceKey = context.GetNamespace()
+                NamespaceKey = Namespace
             };
 
             var response = await FliptClient.GetFlagAsync(request, Metadata);
