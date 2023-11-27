@@ -1,4 +1,4 @@
-﻿using Binateq.FeatureManagement.Flipt.Protos;
+﻿using System.Security.Claims;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
@@ -7,21 +7,18 @@ using Microsoft.FeatureManagement;
 
 namespace Binateq.FeatureManagement.Flipt;
 
-/// <summary>
-/// A feature filter that can be used to activate feature from Flipt service.
-/// </summary>
-public class FliptFeatureFilter : IFeatureFilter, IDisposable
+public class FliptPrincipalFeatureFilter : IContextualFeatureFilter<ClaimsPrincipal>, IDisposable
 {
-    private readonly ILogger<FliptFeatureFilter> _logger;
+    private readonly ILogger<FliptPrincipalFeatureFilter> _logger;
 
     /// <summary>
-    /// Creates Flipt service based feature filter.
+    /// Creates Flipt service based principal feature filter.
     /// </summary>
     /// <param name="logger">Logger.</param>
     /// <param name="configuration">Configuration.</param>
     /// <exception cref="ArgumentNullException">Throws if <paramref name="logger" />
     /// or <paramref name="configuration"/> are <c>null</c>.</exception>
-    public FliptFeatureFilter(ILogger<FliptFeatureFilter> logger, IConfiguration configuration)
+    public FliptPrincipalFeatureFilter(ILogger<FliptPrincipalFeatureFilter> logger, IConfiguration configuration)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -34,23 +31,23 @@ public class FliptFeatureFilter : IFeatureFilter, IDisposable
         if (parameters?.Url == null)
         {
             GrpcChannel = null;
-            FliptClient = null;
+            EvaluationServiceClient = null;
 
             _logger.LogWarning($"{nameof(FliptParameters.Url)} doesn't assigned in {FliptParameters.SectionName} configuration section.");
         }
         else
         {
             GrpcChannel = GrpcChannel.ForAddress(parameters.Url);
-            FliptClient = new Protos.Flipt.FliptClient(GrpcChannel);
+            EvaluationServiceClient = new Protos.EvaluationService.EvaluationServiceClient(GrpcChannel);
 
-            _logger.LogInformation($"{nameof(FliptFeatureFilter)} has been started.");
+            _logger.LogInformation($"{nameof(FliptPrincipalFeatureFilter)} has been started.");
         }
 
         if (string.IsNullOrWhiteSpace(parameters?.ClientToken))
         {
             Metadata = null;
             
-            _logger.LogInformation($"{nameof(FliptFeatureFilter)} started without authorization.");
+            _logger.LogInformation($"{nameof(FliptPrincipalFeatureFilter)} started without authorization.");
         }
         else
         {
@@ -59,7 +56,7 @@ public class FliptFeatureFilter : IFeatureFilter, IDisposable
                 { "authorization", $"Bearer {parameters.ClientToken}"}
             };
 
-            _logger.LogInformation($"{nameof(FliptFeatureFilter)} started with authorization.");
+            _logger.LogInformation($"{nameof(FliptPrincipalFeatureFilter)} started with authorization.");
         }
     }
 
@@ -69,15 +66,15 @@ public class FliptFeatureFilter : IFeatureFilter, IDisposable
     internal GrpcChannel? GrpcChannel { get; private set; }
     
     /// <summary>
-    /// Gets Flipt client.
+    /// Gets EvaluationService client.
     /// </summary>
-    internal Protos.Flipt.FliptClient? FliptClient { get; private set; }
+    internal Protos.EvaluationService.EvaluationServiceClient? EvaluationServiceClient { get; private set; }
     
     /// <summary>
     /// Gets metadata for gRPC request.
     /// </summary>
     internal Metadata? Metadata { get; private set; }
-    
+
     /// <summary>
     /// Disposes managed and unmanaged resources.
     /// </summary>
@@ -97,28 +94,5 @@ public class FliptFeatureFilter : IFeatureFilter, IDisposable
     }
 
     /// <inheritdoc />
-    public async Task<bool> EvaluateAsync(FeatureFilterEvaluationContext context)
-    {
-        if (FliptClient == null)
-            return false;
-
-        try
-        {
-            var request = new GetFlagRequest
-            {
-                Key = context.FeatureName,
-                NamespaceKey = context.GetNamespace()
-            };
-
-            var response = await FliptClient.GetFlagAsync(request, Metadata);
-            
-            return response.Enabled;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Exception occurs while reading feature flag {FeatureName}, the false value has returned.", context.FeatureName);
-            
-            return false;
-        }
-    }
+    public Task<bool> EvaluateAsync(FeatureFilterEvaluationContext featureFilterContext, ClaimsPrincipal appContext) => throw new NotImplementedException();
 }

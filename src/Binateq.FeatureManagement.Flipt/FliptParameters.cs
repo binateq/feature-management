@@ -3,7 +3,7 @@
 namespace Binateq.FeatureManagement.Flipt;
 
 /// <summary>
-/// Providers configuration parameters for Flipt feature filters.
+/// Provides configuration parameters for Flipt feature filters.
 /// </summary>
 public class FliptParameters
 {

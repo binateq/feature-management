@@ -26,6 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Protobuf Include="Protos/evaluation.proto" GrpcServices="EvaluationService"/>
         <Protobuf Include="Protos/flipt.proto" GrpcServices="Flipt"/>
     </ItemGroup>
     

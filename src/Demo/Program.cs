@@ -11,7 +11,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"))
-       .AddFeatureFilter<FliptFeatureFilter>();
+       .AddFeatureFilter<FliptFeatureFilter>()
+       .AddFeatureFilter<FliptPrincipalFeatureFilter>();
 
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
        .AddNegotiate();
