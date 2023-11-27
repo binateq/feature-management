@@ -13,6 +13,9 @@
         <RepositoryUrl>https://github.com/binateq/feature-management.git</RepositoryUrl>
         <RepositoryType>GitHub</RepositoryType>
         <PackageTags>feature management, flipt</PackageTags>
+        <Version>1.2.0</Version>
+        <Copyright>Binateq</Copyright>
+        <PackageReleaseNotes>Implement FliptPrincipalFeatureFilter.</PackageReleaseNotes>
     </PropertyGroup>
 
     <ItemGroup>
