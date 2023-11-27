@@ -101,7 +101,7 @@ Call the `Get` again. IT should return 200 status and the collection of forecast
 
 This static flag requires re-running of re-deploying of applications. Now let's try to use the dynamic flag.
 
-### Append dynamic flag from Flipt
+### Dynamic flag from Flipt
 
 Install and run **Flipt** Docker image:
 
@@ -153,6 +153,79 @@ Run the application and call the `Get` though the Swagger. It should return 404 
 *Enable* the flag **weather-forecast** in the **Flipt** Web UI and repeat the call.
 The application should return 200 status and a list of forecasts.
 
-### Append user-specific flag form Flipt
+### User-specific flag form Flipt
 
-<!--- Not written -->
+Append `FliptPrincipalFeatureFilter` to *composition root*:
+
+```c#
+builder.Services.AddFeatureManagement(builder.Configuration.GetSection("FeatureFlags"))
+       .AddFeatureFilter<FliptFeatureFilter>()
+       .AddFeatureFilter<FliptPrincipalFeatureFilter>();
+```
+
+Append `UserIdClaim` to the `Flipt` configuration section. Append **weather-forecast-principal** also.
+
+```json
+{
+  "Flipt": {
+    "Url": "http://localhost:9000",
+    "UserIdClaim": "ClaimTypes.PrimarySid"
+  },
+  "FeatureFlags": {
+    "weather-forecast": {
+      "EnabledFor": [
+        {
+          "Name": "FliptFeature"
+        }
+      ]
+    },
+    "weather-forecast-principal": {
+      "EnabledFor": [
+        {
+          "Name": "FliptPrincipal"
+        }
+      ]
+    }
+  }
+}
+```
+
+Append new `GetPrincipal` method to use the feature flag:
+
+```c#
+[HttpGet("principal")]
+[Produces(typeof(IEnumerable<WeatherForecast>))]
+[Authorize]
+public async Task<IActionResult> GetPrincipal()
+{
+    if (await _featureManager.IsEnabledAsync("weather-forecast-forecast", HttpContext.User))
+    {
+        return Ok(Enumerable.Range(1, 5)
+                            .Select(index => new WeatherForecast
+                            {
+                                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+                                TemperatureC = Random.Shared.Next(-20, 55),
+                                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+                            }));
+    }
+
+    return NotFound();
+}
+```
+
+Run the **Demo** application and check **GET /weather-forecast/principal** endpoint. It should return **Not Found**.
+Now run in command line:
+
+```shell
+whoami /user
+```
+
+You'll see SID of your user account. Open **Flipt UI**, and create new segment **Specified Users** with the key
+**specified-users**. Set **Match Type** to **Any**.
+
+Append the constraint **UserId** with your account's SID as the value. Choose **==** as the **operator**.
+
+Create new **Boolean** flag **Weather Forecast Principal** with the key **weather-forecast-principal**. Append
+the **Rollout** of the **Segment** type. Choose the segment **specified-users**, and set the **Value** field to `true`.
+
+Check **GET /weather-forecast/principal** endpoint again. It should return a list of forecasts and **Ok** status.
